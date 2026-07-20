@@ -1,20 +1,11 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 const sendVerificationEmail = async (toEmail, token) => {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // TLS, not SSL
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
-  await transporter.sendMail({
-    from: `"ShopEase" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: "onboarding@resend.dev",
     to: toEmail,
     subject: "Verify your email",
     html: `

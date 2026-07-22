@@ -1,38 +1,3 @@
-const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
-const User = require("../models/User");
-const generateToken = require("../utils/generateToken");
-const { sendVerificationEmail } = require("../services/emailService");
-
-// @route POST /api/auth/signup
-const signup = async (req, res) => {
-  const { name, email, password } = req.body;
-
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    return res.status(400).json({ message: "User already exists" });
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  const verificationToken = crypto.randomBytes(32).toString("hex");
-
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    verificationToken,
-  });
-
-  await sendVerificationEmail(user.email, verificationToken);
-
-  res.status(201).json({
-    message: "Signup successful. Please check your email to verify your account.",
-  });
-};
-
-// @route POST /api/auth/login
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -53,13 +18,14 @@ const login = async (req, res) => {
   const token = generateToken(user._id);
 
   res.cookie("token", token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-});
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: "/",
+  });
 
-  res.json({
+  res.status(200).json({
     user: {
       id: user._id,
       name: user.name,
@@ -67,32 +33,3 @@ const login = async (req, res) => {
     },
   });
 };
-
-const logout = async (req, res) => {
- res.clearCookie("token", {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-});
-  res.json({ message: "Logged out" });
-};
-// @route GET /api/auth/verify-email?token=...
-const verifyEmail = async (req, res) => {
-  const { token } = req.query;
-
-  const user = await User.findOne({ verificationToken: token });
-  if (!user) {
-    return res.status(400).json({ message: "Invalid or expired verification token" });
-  }
-
-  user.isVerified = true;
-  user.verificationToken = undefined;
-  await user.save();
-
-  res.json({ message: "Email verified successfully" });
-};
-
-const getMe = async (req, res) => {
-  res.json({ user: req.user });
-};
-module.exports = { signup, login, verifyEmail , logout , getMe};

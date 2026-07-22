@@ -52,8 +52,14 @@ const login = async (req, res) => {
 
   const token = generateToken(user._id);
 
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
   res.json({
-    token,
     user: {
       id: user._id,
       name: user.name,
@@ -62,6 +68,14 @@ const login = async (req, res) => {
   });
 };
 
+const logout = async (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+  });
+  res.json({ message: "Logged out" });
+};
 // @route GET /api/auth/verify-email?token=...
 const verifyEmail = async (req, res) => {
   const { token } = req.query;
@@ -78,4 +92,7 @@ const verifyEmail = async (req, res) => {
   res.json({ message: "Email verified successfully" });
 };
 
-module.exports = { signup, login, verifyEmail };
+const getMe = async (req, res) => {
+  res.json({ user: req.user });
+};
+module.exports = { signup, login, verifyEmail , logout , getMe};

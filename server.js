@@ -6,16 +6,21 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const errorHandler = require("./middleware/errorHandler");
+const categoryRoutes = require("./routes/categoryRoutes");
+const productRoutes = require("./routes/productRoutes");
+const cookieParser = require("cookie-parser");
 
 connectDB();
 
 const app = express();
 
 app.use(cors({
-  origin: "*",
+  origin: process.env.CLIENT_URL,
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
+app.use(cookieParser());
 
 app.use(express.json());
 
@@ -25,7 +30,18 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
+app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
+
 app.use(errorHandler);
 
-// Export the app instead of listening
+const PORT = process.env.PORT || 5000;
+
+// Only listen locally — Vercel handles this differently in production
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
 module.exports = app;

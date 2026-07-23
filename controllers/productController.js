@@ -1,5 +1,5 @@
 const Product = require("../models/Product");
-
+const Category = require("../models/Category");
 // @route POST /api/products (admin only)
 const createProduct = async (req, res) => {
   const { name, description, price, stock, category, images } = req.body;
@@ -27,7 +27,13 @@ const getProducts = async (req, res) => {
   }
 
   if (category) {
-    query.category = category;
+    const categoryDoc = await Category.findOne({ slug: category });
+    if (categoryDoc) {
+      query.category = categoryDoc._id;
+    } else {
+      // no matching category — return empty results instead of ignoring filter
+      return res.json({ products: [], total: 0, page: Number(page), pages: 0 });
+    }
   }
 
   if (minPrice || maxPrice) {
@@ -53,7 +59,6 @@ const getProducts = async (req, res) => {
     pages: Math.ceil(total / Number(limit)),
   });
 };
-
 // @route GET /api/products/:id (public)
 const getProductById = async (req, res) => {
   const product = await Product.findById(req.params.id).populate("category", "name slug");

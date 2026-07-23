@@ -2,6 +2,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const express = require("express");
+
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
@@ -13,7 +14,7 @@ const errorHandler = require("./middleware/errorHandler");
 connectDB();
 
 const app = express();
-
+app.set("trust proxy", 1);
 app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true,

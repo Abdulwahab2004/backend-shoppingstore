@@ -9,14 +9,26 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 const errorHandler = require("./middleware/errorHandler");
 
 connectDB();
 
 const app = express();
 app.set("trust proxy", 1);
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -28,6 +40,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

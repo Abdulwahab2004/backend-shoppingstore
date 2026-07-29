@@ -27,11 +27,10 @@ const getProducts = async (req, res) => {
   }
 
   if (category) {
-    const categoryDoc = await Category.findOne({ slug: category });
+    const categoryDoc = await Category.findOne({ slug: category }).select("_id").lean();
     if (categoryDoc) {
       query.category = categoryDoc._id;
     } else {
-      // no matching category — return empty results instead of ignoring filter
       return res.json({ products: [], total: 0, page: Number(page), pages: 0 });
     }
   }
@@ -44,13 +43,16 @@ const getProducts = async (req, res) => {
 
   const skip = (Number(page) - 1) * Number(limit);
 
-  const products = await Product.find(query)
-    .populate("category", "name slug")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(Number(limit));
-
-  const total = await Product.countDocuments(query);
+  const [products, total] = await Promise.all([
+    Product.find(query)
+      .select("name price images category stock")
+      .populate("category", "name slug")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean(),
+    Product.countDocuments(query),
+  ]);
 
   res.json({
     products,
@@ -61,7 +63,9 @@ const getProducts = async (req, res) => {
 };
 // @route GET /api/products/:id (public)
 const getProductById = async (req, res) => {
-  const product = await Product.findById(req.params.id).populate("category", "name slug");
+  const product = await Product.findById(req.params.id)
+    .populate("category", "name slug")
+    .lean();
   if (!product) {
     return res.status(404).json({ message: "Product not found" });
   }

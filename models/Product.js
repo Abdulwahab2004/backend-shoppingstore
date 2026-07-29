@@ -25,13 +25,15 @@ const productSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
-    images: [
-      {
-        type: String, // image URLs
-      },
-    ],
+    images: [{ type: String }],
   },
   { timestamps: true }
 );
+
+// Indexes for faster queries
+productSchema.index({ name: "text" }); // supports search
+productSchema.index({ category: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Product", productSchema);

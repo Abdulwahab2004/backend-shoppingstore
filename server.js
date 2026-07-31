@@ -11,6 +11,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const errorHandler = require("./middleware/errorHandler");
+const wishlistRoutes = require("./routes/wishlistRoutes");
 
 connectDB();
 
@@ -41,6 +42,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("API is running...");

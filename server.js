@@ -13,6 +13,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 connectDB();
 
@@ -45,6 +46,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", orderRoutes)
+app.use("/api/payments", paymentRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

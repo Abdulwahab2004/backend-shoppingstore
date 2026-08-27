@@ -2,7 +2,6 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const express = require("express");
-
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
@@ -10,15 +9,16 @@ const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
-const errorHandler = require("./middleware/errorHandler");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const { handleWebhook } = require("./controllers/paymentController");
+const errorHandler = require("./middleware/errorHandler");
 
 connectDB();
 
 const app = express();
-app.set("trust proxy", 1);
+
 const allowedOrigins = [
   "http://localhost:5173",
   process.env.CLIENT_URL,
@@ -38,6 +38,15 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
+
+// IMPORTANT: webhook route registered BEFORE express.json(),
+// using express.raw() so Stripe's signature check works correctly
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  handleWebhook
+);
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
@@ -45,7 +54,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
-app.use("/api/orders", orderRoutes)
+app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 
 app.get("/", (req, res) => {

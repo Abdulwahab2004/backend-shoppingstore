@@ -40,6 +40,9 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
+    stripeSessionId: {
+  type: String,
+},
   },
   { timestamps: true }
 );

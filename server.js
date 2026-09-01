@@ -14,6 +14,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const { handleWebhook } = require("./controllers/paymentController");
 const errorHandler = require("./middleware/errorHandler");
+const adminRoutes = require("./routes/adminRoutes");
 
 connectDB();
 
@@ -56,6 +57,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

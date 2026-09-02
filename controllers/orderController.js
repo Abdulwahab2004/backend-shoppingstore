@@ -1,6 +1,32 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
+// @route GET /api/admin/orders (admin — all orders, not just their own)
+const getAllOrders = async (req, res) => {
+  const orders = await Order.find()
+    .populate("user", "name email")
+    .sort({ createdAt: -1 })
+    .lean();
+  res.json(orders);
+};
+// @route PUT /api/admin/orders/:id/status
+const updateOrderStatus = async (req, res) => {
+  const { status } = req.body;
 
+  const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
+  const order = await Order.findById(req.params.id);
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  order.status = status;
+  await order.save();
+
+  res.json(order);
+};
 // @route POST /api/orders
 const createOrder = async (req, res) => {
   const { shippingAddress } = req.body;
@@ -61,4 +87,5 @@ const getOrderById = async (req, res) => {
   res.json(order);
 };
 
-module.exports = { createOrder, getMyOrders, getOrderById };
+
+module.exports = { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderStatus };

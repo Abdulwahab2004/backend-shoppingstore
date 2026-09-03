@@ -87,5 +87,18 @@ const getOrderById = async (req, res) => {
   res.json(order);
 };
 
+// @route GET /api/admin/orders/:id (admin — can view any order regardless of owner)
+const getOrderByIdAdmin = async (req, res) => {
+  const order = await Order.findById(req.params.id)
+    .populate("user", "name email")
+    .populate("items.product", "name images price")
+    .lean();
 
-module.exports = { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderStatus };
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  res.json(order);
+};
+
+module.exports = { createOrder, getMyOrders, getOrderById, getAllOrders, updateOrderStatus ,getOrderByIdAdmin};

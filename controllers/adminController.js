@@ -6,7 +6,9 @@ const Category = require("../models/Category");
 
 // @route GET /api/admin/stats
 const getDashboardStats = async (req, res) => {
-  const [totalUsers, totalProducts, totalCategories, totalOrders, revenueResult, revenueByDay] =
+  const days = Number(req.query.days) || 7;
+
+  const [totalUsers, totalProducts, totalCategories, totalOrders, revenueResult, revenueRaw] =
     await Promise.all([
       User.countDocuments(),
       Product.countDocuments(),
@@ -16,12 +18,11 @@ const getDashboardStats = async (req, res) => {
         { $match: { status: { $ne: "cancelled" } } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } },
       ]),
-      // Groups revenue by day for the last 7 days — powers the analytics chart
       Order.aggregate([
         {
           $match: {
             status: { $ne: "cancelled" },
-            createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+            createdAt: { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) },
           },
         },
         {
@@ -30,11 +31,27 @@ const getDashboardStats = async (req, res) => {
             total: { $sum: "$totalAmount" },
           },
         },
-        { $sort: { _id: 1 } },
       ]),
     ]);
 
   const totalRevenue = revenueResult[0]?.total || 0;
+
+  // Build a lookup of date -> total from what the DB actually returned
+  const revenueMap = {};
+  revenueRaw.forEach((r) => {
+    revenueMap[r._id] = r.total;
+  });
+
+  // Fill in every single day in the range, defaulting to 0 if no orders that day
+  const revenueByDay = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+    const dateStr = date.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    revenueByDay.push({
+      _id: dateStr,
+      total: revenueMap[dateStr] || 0,
+    });
+  }
 
   const recentOrders = await Order.find()
     .populate("user", "name email")

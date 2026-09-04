@@ -18,7 +18,7 @@ const createProduct = async (req, res) => {
 
 // @route GET /api/products (public) — supports search, filter, pagination
 const getProducts = async (req, res) => {
-  const { search, category, minPrice, maxPrice, page = 1, limit = 12 } = req.query;
+  const { search, category, minPrice, maxPrice, sort, page = 1, limit = 12 } = req.query;
 
   const query = {};
 
@@ -41,13 +41,20 @@ const getProducts = async (req, res) => {
     if (maxPrice) query.price.$lte = Number(maxPrice);
   }
 
+  const sortOptions = {
+    price_asc: { price: 1 },
+    price_desc: { price: -1 },
+    newest: { createdAt: -1 },
+  };
+  const sortQuery = sortOptions[sort] || { createdAt: -1 };
+
   const skip = (Number(page) - 1) * Number(limit);
 
   const [products, total] = await Promise.all([
     Product.find(query)
       .select("name price images category stock")
       .populate("category", "name slug")
-      .sort({ createdAt: -1 })
+      .sort(sortQuery)
       .skip(skip)
       .limit(Number(limit))
       .lean(),

@@ -10,6 +10,22 @@ const sendVerificationEmail = async (toEmail, token) => {
       pass: process.env.EMAIL_PASS,
     },
   });
+  const sendContactNotification = async (contact) => {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  await transporter.sendMail({ // reuse your existing transporter setup
+    from: process.env.EMAIL_FROM,
+    to: adminEmail,
+    subject: `New Contact Form Submission: ${contact.subject}`,
+    html: `
+      <p><strong>From:</strong> ${contact.name} (${contact.email})</p>
+      <p><strong>Subject:</strong> ${contact.subject}</p>
+      <p><strong>Message:</strong></p>
+      <p>${contact.message}</p>
+    `,
+  });
+};
+
+module.exports = { sendVerificationEmail, sendContactNotification };
 
   const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 

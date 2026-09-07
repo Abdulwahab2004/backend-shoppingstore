@@ -5,6 +5,7 @@ const { getUsers, updateUserRole, deleteUser } = require("../controllers/userCon
 const { getAllOrders, updateOrderStatus, getOrderByIdAdmin } = require("../controllers/orderController");
 const protect = require("../middleware/authMiddleware");
 const admin = require("../middleware/adminMiddleware");
+const { getAllContacts, updateContactStatus } = require("../controllers/contactController");
 
 router.use(protect, admin);
 
@@ -18,4 +19,6 @@ router.get("/orders", getAllOrders);
 router.put("/orders/:id/status", updateOrderStatus);
 router.get("/orders/:id", getOrderByIdAdmin);
 
+ router.get("/contact", getAllContacts);
+ router.put("/contact/:id/status", updateContactStatus);
 module.exports = router;

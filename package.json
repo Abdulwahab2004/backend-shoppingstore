@@ -24,6 +24,7 @@
     "nodemailer": "^9.0.3",
     "pdfkit": "^0.20.1",
     "resend": "^6.17.2",
+    "socket.io": "^4.8.3",
     "stripe": "^22.4.0"
   },
   "devDependencies": {

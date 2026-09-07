@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
+const { getIO } = require("../socket");
 // @route GET /api/admin/orders (admin — all orders, not just their own)
 const getAllOrders = async (req, res) => {
   const orders = await Order.find()
@@ -24,6 +25,13 @@ const updateOrderStatus = async (req, res) => {
 
   order.status = status;
   await order.save();
+
+  // Notify the specific customer who placed this order, in real time
+  const io = getIO();
+  io.to(`user:${order.user}`).emit("orderStatusUpdate", {
+    orderId: order._id,
+    status: order.status,
+  });
 
   res.json(order);
 };
@@ -58,6 +66,13 @@ const createOrder = async (req, res) => {
   // Clear the cart after order is placed
   cart.items = [];
   await cart.save();
+  const io = getIO();
+io.to("admins").emit("newOrderAdmin", {
+  orderId: order._id,
+  customerName: req.user.name,
+  total: order.totalAmount, // adjust field name to match your schema
+  createdAt: order.createdAt,
+});
 
   res.status(201).json(order);
 };

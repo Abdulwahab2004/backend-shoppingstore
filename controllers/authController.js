@@ -96,7 +96,14 @@ const logout = async (req, res) => {
 
 // @route GET /api/auth/me
 const getMe = async (req, res) => {
-  res.json({ user: req.user });
+  res.json({
+    user: {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+    },
+  });
 };
 
 module.exports = { signup, login, verifyEmail, logout, getMe };

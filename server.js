@@ -20,6 +20,9 @@ const { handleWebhook } = require("./controllers/paymentController");
 const errorHandler = require("./middleware/errorHandler");
 const contactRoutes = require("./routes/contactRoutes");
 
+
+const newsletterRoutes = require("./routes/newsletterRoutes");
+
 connectDB();
 
 const app = express();
@@ -63,6 +66,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

@@ -1,6 +1,7 @@
 const Stripe = require("stripe");
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
+const { getIO } = require("../socket");
 
 // @route POST /api/payments/create-checkout-session
 const createCheckoutSession = async (req, res) => {
@@ -46,13 +47,8 @@ const handleWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
 
   let event;
-
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error("Webhook signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -71,12 +67,9 @@ const handleWebhook = async (req, res) => {
         price: item.product.price,
       }));
 
-      const totalAmount = orderItems.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
+      const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-      await Order.create({
+      const order = await Order.create({
         user: userId,
         items: orderItems,
         totalAmount,
@@ -86,6 +79,13 @@ const handleWebhook = async (req, res) => {
 
       cart.items = [];
       await cart.save();
+
+      // Tell every connected admin dashboard a new order just came in
+      const io = getIO();
+      io.to("admins").emit("newOrder", {
+        orderId: order._id,
+        totalAmount: order.totalAmount,
+      });
     }
   }
 

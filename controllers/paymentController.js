@@ -1,7 +1,8 @@
 const Stripe = require("stripe");
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
-const { getIO } = require("../socket");
+
+const notifySocket = require("../utils/notifySocket");
 
 // @route POST /api/payments/create-checkout-session
 const createCheckoutSession = async (req, res) => {
@@ -81,11 +82,10 @@ const handleWebhook = async (req, res) => {
       await cart.save();
 
       // Tell every connected admin dashboard a new order just came in
-      const io = getIO();
-      io.to("admins").emit("newOrder", {
-        orderId: order._id,
-        totalAmount: order.totalAmount,
-      });
+      await notifySocket("admins", "newOrder", {
+  orderId: order._id,
+  totalAmount: order.totalAmount,
+});
     }
   }
 

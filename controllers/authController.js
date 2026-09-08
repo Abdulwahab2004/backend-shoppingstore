@@ -106,4 +106,62 @@ const getMe = async (req, res) => {
   });
 };
 
-module.exports = { signup, login, verifyEmail, logout, getMe };
+// @route PUT /api/auth/profile
+const updateProfile = async (req, res) => {
+  const { name, email } = req.body;
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  if (email && email !== user.email) {
+    const emailTaken = await User.findOne({ email });
+    if (emailTaken) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+    user.email = email;
+  }
+
+  if (name) user.name = name;
+
+  await user.save();
+
+  res.json({
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+};
+
+// @route PUT /api/auth/change-password
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ message: "Current password is incorrect" });
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(newPassword, salt);
+  await user.save();
+
+  res.json({ message: "Password updated successfully" });
+};
+// @route POST /api/auth/fcm-token
+const saveFcmToken = async (req, res) => {
+  const { token } = req.body;
+  await User.findByIdAndUpdate(req.user._id, { fcmToken: token });
+  res.json({ message: "Token saved" });
+};
+
+module.exports = { signup, login, verifyEmail, logout, getMe, updateProfile, changePassword,saveFcmToken };

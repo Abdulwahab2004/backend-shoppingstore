@@ -1,6 +1,9 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const { getIO } = require("../socket");
+const { sendPushNotification } = require("../firebaseAdmin");
+const User = require("../models/User");
+const notifySocket = require("../utils/notifySocket");
 // @route GET /api/admin/orders (admin — all orders, not just their own)
 const getAllOrders = async (req, res) => {
   const orders = await Order.find()
@@ -26,12 +29,21 @@ const updateOrderStatus = async (req, res) => {
   order.status = status;
   await order.save();
 
-  // Notify the specific customer who placed this order, in real time
-  const io = getIO();
-  io.to(`user:${order.user}`).emit("orderStatusUpdate", {
-    orderId: order._id,
-    status: order.status,
-  });
+ await notifySocket(`user:${order.user}`, "orderStatusUpdate", {
+  orderId: order._id,
+  status: order.status,
+});
+
+  // Also send a real push notification, so the customer gets notified
+  // even if they don't have the site open (WebSocket only works while it's open)
+  const customer = await User.findById(order.user).select("fcmToken");
+  if (customer?.fcmToken) {
+    await sendPushNotification(
+      customer.fcmToken,
+      "Order Update",
+      `Your order #${order._id.toString().slice(-6).toUpperCase()} is now ${status}`
+    );
+  }
 
   res.json(order);
 };

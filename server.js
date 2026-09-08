@@ -2,11 +2,9 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const express = require("express");
-const http = require("http");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
-const { initSocket } = require("./socket");
 
 const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
@@ -16,24 +14,19 @@ const wishlistRoutes = require("./routes/wishlistRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+const newsletterRoutes = require("./routes/newsletterRoutes");
 const { handleWebhook } = require("./controllers/paymentController");
 const errorHandler = require("./middleware/errorHandler");
-const contactRoutes = require("./routes/contactRoutes");
-
-
-const newsletterRoutes = require("./routes/newsletterRoutes");
 
 connectDB();
 
 const app = express();
-const httpServer = http.createServer(app); // wrap Express in a raw HTTP server
 
 const allowedOrigins = [
   "http://localhost:5173",
   process.env.CLIENT_URL,
 ].filter(Boolean);
-
-initSocket(httpServer, allowedOrigins); // attach Socket.io to that same server
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -77,7 +70,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 if (process.env.NODE_ENV !== "production") {
-  httpServer.listen(PORT, () => {
+  app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 }

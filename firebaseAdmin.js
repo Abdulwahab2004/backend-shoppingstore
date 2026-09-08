@@ -1,15 +1,22 @@
 const admin = require("firebase-admin");
 
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-  }),
-});
+let firebaseInitialized = false;
+
+try {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
+  });
+  firebaseInitialized = true;
+} catch (err) {
+  console.error("Firebase Admin failed to initialize:", err.message);
+}
 
 const sendPushNotification = async (fcmToken, title, body) => {
-  if (!fcmToken) return;
+  if (!firebaseInitialized || !fcmToken) return;
   try {
     await admin.messaging().send({
       token: fcmToken,
